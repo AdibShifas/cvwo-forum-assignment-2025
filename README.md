@@ -1,8 +1,21 @@
 # CVWO Forum Assignment
 
-A web forum built with Go and React
+**Student:** Adib Shifas  
+**Matriculation Number:** A0305618E
 
-## Features
-- Topics
-- Posts
-- Comments
+## Tech Stack
+- Frontend: React + TypeScript
+- Backend: Go
+- Database: PostgreSQL
+
+## Project Structure
+- `backend/` - Go backend API
+- `frontend/` - React frontend UI
+- `docs/` - Documentation
+
+## Progress
+- [x] Project setup
+- [ ] Backend API
+- [ ] Frontend UI
+- [ ] Database integration
+- [ ] Deployment
