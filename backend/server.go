@@ -4,60 +4,94 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/rs/cors"
 )
 
 type Topic struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-type Post struct {
-	ID      int    `json:"id"`
-	Title   string `json:"title"`
-	Author  string `json:"author"`
-	TopicID int    `json:"topic_id"`
+// Get all topics from database
+func getTopicsFromDB() ([]Topic, error) {
+	rows, err := db.Query("SELECT id, name, description, created_at, updated_at FROM topics ORDER BY id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var topics []Topic
+	for rows.Next() {
+		var topic Topic
+		err := rows.Scan(&topic.ID, &topic.Name, &topic.Description, &topic.CreatedAt, &topic.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		topics = append(topics, topic)
+	}
+
+	return topics, nil
 }
 
-var topics = []Topic{
-	{ID: 1, Name: "Technology", Description: "Tech discussions"},
-	{ID: 2, Name: "Gaming", Description: "Video game talks"},
-	{ID: 3, Name: "Music", Description: "Music lovers"},
+// Create new topic in database
+func createTopicInDB(name, description string) (*Topic, error) {
+	var topic Topic
+	err := db.QueryRow(
+		"INSERT INTO topics (name, description) VALUES ($1, $2) RETURNING id, name, description, created_at, updated_at",
+		name, description,
+	).Scan(&topic.ID, &topic.Name, &topic.Description, &topic.CreatedAt, &topic.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &topic, nil
 }
 
-var posts = []Post{
-	{ID: 1, Title: "AI is amazing", Author: "Adib", TopicID: 1},
-	{ID: 2, Title: "Best RPG games", Author: "Alice", TopicID: 2},
-}
-
+// Handle topics endpoint
 func handleTopics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == "GET" {
+		topics, err := getTopicsFromDB()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		json.NewEncoder(w).Encode(topics)
 
 	} else if r.Method == "POST" {
-		var newTopic Topic
-		json.NewDecoder(r.Body).Decode(&newTopic)
-		newTopic.ID = len(topics) + 1
-		topics = append(topics, newTopic)
+		var input struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&input)
+		if err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+
+		topic, err := createTopicInDB(input.Name, input.Description)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(newTopic)
+		json.NewEncoder(w).Encode(topic)
 	}
-}
-
-func getPosts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(posts)
 }
 
 func home(w http.ResponseWriter, r *http.Request) {
 	message := map[string]string{
 		"message": "🚀 CVWO Forum API",
-		"version": "1.0",
+		"version": "2.0 - Now with PostgreSQL!",
 		"student": "Adib Shifas",
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -65,11 +99,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Initialize database
+	InitDB()
+	defer CloseDB()
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/topics", handleTopics)
-	mux.HandleFunc("/posts", getPosts)
 
 	// CORS configuration
 	c := cors.New(cors.Options{
@@ -81,11 +118,10 @@ func main() {
 	handler := c.Handler(mux)
 
 	fmt.Println("🚀 Server running on http://localhost:8080")
-	fmt.Println("✅ CORS enabled for http://localhost:3000")
+	fmt.Println("✅ Connected to PostgreSQL database")
 	fmt.Println("API Endpoints:")
 	fmt.Println("  GET  /topics   - List all topics")
 	fmt.Println("  POST /topics   - Create new topic")
-	fmt.Println("  GET  /posts    - List all posts")
 
 	http.ListenAndServe(":8080", handler)
 }
