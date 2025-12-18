@@ -1,130 +1,108 @@
-import { useState } from "react";
+import { useState } from 'react';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import SendIcon from '@mui/icons-material/Send';
+import CircularProgress from '@mui/material/CircularProgress';
+
 interface CreatePostFormProps {
-    topicId: number;
-    onPostCreated: () => void;
+  topicId: number;
+  onPostCreated: () => void;
 }
 
 function CreatePostForm(props: CreatePostFormProps) {
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [author, setAuthor] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [author, setAuthor] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-        const newPost = {
-        topic_id: props.topicId,
-        title: title,
-        content: content,
-        author: author
-        };
-
-        fetch("http://localhost:8080/posts", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(newPost)
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Post created:", data);
-            // Clear form
-            setTitle('');
-            setContent('');
-            setAuthor('');
-            setIsSubmitting(false);
-            // Notify parent component
-            props.onPostCreated();
-        })
-        .catch(error => {
-            console.error("Error creating post:", error);
-            setIsSubmitting(false);
-        });
+    const newPost = {
+      topic_id: props.topicId,
+      title: title,
+      content: content,
+      author: author
     };
-    return (
-    <div style={{
-      backgroundColor: '#f5f5f5',
-      padding: '20px',
-      borderRadius: '8px',
-      marginBottom: '20px'
-    }}>
-      <h3>✍️ Create New Post</h3>
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <input
-            type="text"
-            placeholder="Post title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '5px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              boxSizing: 'border-box'
-            }}
-          />
-        </div>
+
+    fetch('http://localhost:8080/posts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newPost)
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Post created:', data);
+        setTitle('');
+        setContent('');
+        setAuthor('');
+        setIsSubmitting(false);
+        props.onPostCreated();
+      })
+      .catch(error => {
+        console.error('Error creating post:', error);
+        setIsSubmitting(false);
+      });
+  };
+
+  return (
+    <Paper elevation={3} sx={{ padding: 3, marginBottom: 3 }}>
+      <Typography variant="h6" gutterBottom>
+        ✍️ Create New Post
+      </Typography>
+      
+      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <TextField
+          fullWidth
+          label="Post Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          margin="normal"
+          variant="outlined"
+        />
         
-        <div style={{ marginBottom: '15px' }}>
-          <textarea
-            placeholder="Post content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-            rows={5}
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '5px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              resize: 'vertical',
-              boxSizing: 'border-box',
-              fontFamily: 'inherit'
-            }}
-          />
-        </div>
+        <TextField
+          fullWidth
+          label="Post Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+          margin="normal"
+          variant="outlined"
+          multiline
+          rows={5}
+        />
         
-        <div style={{ marginBottom: '15px' }}>
-          <input
-            type="text"
-            placeholder="Your name"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            required
-            style={{
-              width: '100%',
-              padding: '10px',
-              borderRadius: '5px',
-              border: '1px solid #ddd',
-              fontSize: '14px',
-              boxSizing: 'border-box'
-            }}
-          />
-        </div>
-        <button
+        <TextField
+          fullWidth
+          label="Your Name"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          required
+          margin="normal"
+          variant="outlined"
+        />
+        
+        <Button
           type="submit"
+          variant="contained"
+          color="primary"
+          size="large"
           disabled={isSubmitting}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: isSubmitting ? '#ccc' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer',
-            fontSize: '14px'
-          }}
+          startIcon={isSubmitting ? <CircularProgress size={20} /> : <SendIcon />}
+          sx={{ mt: 2 }}
         >
-          {isSubmitting ? '📤 Creating...' : '📝 Create Post'}
-        </button>
-      </form>
-    </div>
+          {isSubmitting ? 'Creating...' : 'Create Post'}
+        </Button>
+      </Box>
+    </Paper>
   );
 }
 

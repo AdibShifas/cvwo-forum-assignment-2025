@@ -1,4 +1,11 @@
 import { useState, useEffect } from 'react';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TopicCard from './TopicCard';
 import PostList from './PostList';
 import CreatePostForm from './CreatePostForm';
@@ -15,7 +22,6 @@ function App() {
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Fetch topics when component loads
   useEffect(() => {
     fetch('http://localhost:8080/topics')
       .then(response => response.json())
@@ -29,113 +35,99 @@ function App() {
       });
   }, []);
 
-  if (loading) {
-    return <div style={{ padding: '20px' }}>Loading...</div>;
-  }
-
   const handlePostCreated = () => {
     setRefreshCounter(prev => prev + 1);
   };
+
+  if (loading) {
+    return (
+      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   // Posts view
   if (selectedTopicId) {
     const selectedTopic = topics.find(t => t.id === selectedTopicId);
     
     return (
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        <button 
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Button 
+          startIcon={<ArrowBackIcon />}
           onClick={() => setSelectedTopicId(null)}
-          style={{
-            padding: '8px 16px',
-            marginBottom: '20px',
-            backgroundColor: '#f0f0f0',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
+          variant="outlined"
+          sx={{ mb: 3 }}
         >
-          ← Back to Topics
-        </button>
+          Back to Topics
+        </Button>
         
-        <h1>📝 {selectedTopic?.name}</h1>
-        <p style={{ color: '#666' }}>{selectedTopic?.description}</p>
+        <Typography variant="h3" component="h1" gutterBottom>
+          📝 {selectedTopic?.name}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" paragraph>
+          {selectedTopic?.description}
+        </Typography>
         
-        <hr style={{ margin: '20px 0' }} />
+        <Divider sx={{ my: 3 }} />
         
         <CreatePostForm 
           topicId={selectedTopicId} 
           onPostCreated={handlePostCreated}
         />
         
-        <h2>Posts</h2>
+        <Typography variant="h5" gutterBottom>
+          Posts
+        </Typography>
         <PostList 
           topicId={selectedTopicId} 
           refreshTrigger={refreshCounter}
         />
-      </div>
+      </Container>
     );
   }
 
-  // If a topic is selected, show its posts
-  if (selectedTopicId) {
-    const selectedTopic = topics.find(t => t.id === selectedTopicId);
-    
-    return (
-      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-        <button 
-          onClick={() => setSelectedTopicId(null)}
-          style={{
-            padding: '8px 16px',
-            marginBottom: '20px',
-            backgroundColor: '#f0f0f0',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          ← Back to Topics
-        </button>
-        
-        <h1>📝 {selectedTopic?.name}</h1>
-        <p style={{ color: '#666' }}>{selectedTopic?.description}</p>
-        
-        <hr style={{ margin: '20px 0' }} />
-        
-        <h2>Posts</h2>
-        <PostList topicId={selectedTopicId} />
-      </div>
-    );
-  }
-
-  // Show topics list
+  // Topics view
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>🚀 CVWO Forum</h1>
-      <p>Built by Adib Shifas</p>
-      <p style={{ fontSize: '12px', color: '#666' }}>
-        ✅ Connected to Go backend + PostgreSQL
-      </p>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h2" component="h1" gutterBottom>
+          🚀 CVWO Forum
+        </Typography>
+        <Typography variant="h6" color="text.secondary">
+          Built by Adib Shifas
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          ✅ Go Backend + React Frontend + PostgreSQL
+        </Typography>
+      </Box>
       
-      <h2>Topics ({topics.length})</h2>
+      <Divider sx={{ my: 3 }} />
+      
+      <Typography variant="h4" gutterBottom>
+        Topics ({topics.length})
+      </Typography>
       
       {topics.length === 0 ? (
-        <p>No topics yet!</p>
+        <Typography color="text.secondary">No topics yet!</Typography>
       ) : (
-        topics.map(topic => (
-          <div 
-            key={topic.id}
-            onClick={() => setSelectedTopicId(topic.id)}
-            style={{ cursor: 'pointer' }}
-          >
-            <TopicCard 
-              name={topic.name}
-              description={topic.description}
-              postCount={0}
-            />
-          </div>
-        ))
+        <Box>
+          {topics.map(topic => (
+            <div 
+              key={topic.id}
+              onClick={() => setSelectedTopicId(topic.id)}
+              style={{ cursor: 'pointer' }}
+            >
+              <TopicCard 
+                name={topic.name}
+                description={topic.description}
+                postCount={0}
+              />
+            </div>
+          ))}
+        </Box>
       )}
-    </div>
+    </Container>
   );
 }
 

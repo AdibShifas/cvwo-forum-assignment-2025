@@ -1,4 +1,10 @@
-// Define what props this component accepts
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardActionArea from '@mui/material/CardActionArea';
+import Typography from '@mui/material/Typography';
+import Chip from '@mui/material/Chip';
+import ForumIcon from '@mui/icons-material/Forum';
+
 interface TopicCardProps {
   name: string;
   description: string;
@@ -6,19 +12,37 @@ interface TopicCardProps {
 }
 
 function TopicCard(props: TopicCardProps) {
-    return (
-        <div style={{
-            border: '1px solid #ddd',
-            padding: '15px',
-            margin: '10px 0',
-            borderRadius: '8px',
-            backgroundColor: '#f9f9f9'
-        }}>
-            <h3>{props.name}</h3>
-            <p>{props.description}</p>
-            <small>📝 {props.postCount} posts</small>
-        </div>
-    );
+  return (
+    <Card 
+      sx={{ 
+        marginBottom: 2,
+        '&:hover': {
+          boxShadow: 6,
+          transform: 'translateY(-2px)',
+          transition: 'all 0.3s ease'
+        }
+      }}
+    >
+      <CardActionArea>
+        <CardContent>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" component="h2" gutterBottom>
+              {props.name}
+            </Typography>
+            <Chip 
+              icon={<ForumIcon />} 
+              label={`${props.postCount} posts`}
+              color="primary"
+              size="small"
+            />
+          </div>
+          <Typography variant="body2" color="text.secondary">
+            {props.description}
+          </Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
 }
 
 export default TopicCard;
