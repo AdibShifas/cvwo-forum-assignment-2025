@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import TopicCard from './TopicCard';
-import React, { useState, useEffect } from 'react';
+import PostList from './PostList';
+import CreatePostForm from './CreatePostForm';
 
 interface Topic {
   id: number;
@@ -10,15 +12,11 @@ interface Topic {
 function App() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newTopicName, setNewTopicName] = useState('');
-  const [newTopicDesc, setNewTopicDesc] = useState('');
+  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+  const [refreshCounter, setRefreshCounter] = useState(0);
 
-  // Fetch topics on load
+  // Fetch topics when component loads
   useEffect(() => {
-    fetchTopics();
-  }, []);
-
-  const fetchTopics = () => {
     fetch('http://localhost:8080/topics')
       .then(response => response.json())
       .then(data => {
@@ -29,117 +27,112 @@ function App() {
         console.error('Error fetching topics:', error);
         setLoading(false);
       });
-  };
-
-  //create new topic
-  const handleCreateTopic = (e: React.FormEvent) => {
-    e.preventDefault(); //prevent page refresh
-    const newTopic = {
-      name: newTopicName,
-      description: newTopicDesc
-    };
-    fetch('http://localhost:8080/topics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newTopic)
-    })
-      .then(response => response.json())
-      .then(data => {
-        // Add new topic to list
-        setTopics([...topics, data]);
-        // Clear form
-        setNewTopicName('');
-        setNewTopicDesc('');
-      })
-      .catch(error => {
-        console.error('Error creating topic:', error);
-      });
-  };
+  }, []);
 
   if (loading) {
-    return <div style={{ padding: '20px' }}>Loading topics...</div>;
+    return <div style={{ padding: '20px' }}>Loading...</div>;
   }
 
+  const handlePostCreated = () => {
+    setRefreshCounter(prev => prev + 1);
+  };
+
+  // Posts view
+  if (selectedTopicId) {
+    const selectedTopic = topics.find(t => t.id === selectedTopicId);
+    
+    return (
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <button 
+          onClick={() => setSelectedTopicId(null)}
+          style={{
+            padding: '8px 16px',
+            marginBottom: '20px',
+            backgroundColor: '#f0f0f0',
+            border: '1px solid #ddd',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Topics
+        </button>
+        
+        <h1>📝 {selectedTopic?.name}</h1>
+        <p style={{ color: '#666' }}>{selectedTopic?.description}</p>
+        
+        <hr style={{ margin: '20px 0' }} />
+        
+        <CreatePostForm 
+          topicId={selectedTopicId} 
+          onPostCreated={handlePostCreated}
+        />
+        
+        <h2>Posts</h2>
+        <PostList 
+          topicId={selectedTopicId} 
+          refreshTrigger={refreshCounter}
+        />
+      </div>
+    );
+  }
+
+  // If a topic is selected, show its posts
+  if (selectedTopicId) {
+    const selectedTopic = topics.find(t => t.id === selectedTopicId);
+    
+    return (
+      <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <button 
+          onClick={() => setSelectedTopicId(null)}
+          style={{
+            padding: '8px 16px',
+            marginBottom: '20px',
+            backgroundColor: '#f0f0f0',
+            border: '1px solid #ddd',
+            borderRadius: '5px',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Topics
+        </button>
+        
+        <h1>📝 {selectedTopic?.name}</h1>
+        <p style={{ color: '#666' }}>{selectedTopic?.description}</p>
+        
+        <hr style={{ margin: '20px 0' }} />
+        
+        <h2>Posts</h2>
+        <PostList topicId={selectedTopicId} />
+      </div>
+    );
+  }
+
+  // Show topics list
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1>🚀 CVWO Forum</h1>
       <p>Built by Adib Shifas</p>
       <p style={{ fontSize: '12px', color: '#666' }}>
-        ✅ Connected to Go backend
+        ✅ Connected to Go backend + PostgreSQL
       </p>
       
-      {/* Create Topic Form */}
-      <div style={{
-        backgroundColor: '#f5f5f5',
-        padding: '20px',
-        borderRadius: '8px',
-        marginBottom: '20px'
-      }}>
-        <h3>Create New Topic</h3>
-        <form onSubmit={handleCreateTopic}>
-          <div style={{ marginBottom: '10px' }}>
-            <input
-              type="text"
-              placeholder="Topic name"
-              value={newTopicName}
-              onChange={(e) => setNewTopicName(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <input
-              type="text"
-              placeholder="Description"
-              value={newTopicDesc}
-              onChange={(e) => setNewTopicDesc(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '5px',
-                border: '1px solid #ddd',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            ➕ Create Topic
-          </button>
-        </form>
-      </div>
-
-      <h2>All Topics ({topics.length})</h2>
+      <h2>Topics ({topics.length})</h2>
       
       {topics.length === 0 ? (
         <p>No topics yet!</p>
       ) : (
-        topics.map((topic) => (
-          <TopicCard 
+        topics.map(topic => (
+          <div 
             key={topic.id}
-            name={topic.name}
-            description={topic.description}
-            postCount={0}
-          />
+            onClick={() => setSelectedTopicId(topic.id)}
+            style={{ cursor: 'pointer' }}
+          >
+            <TopicCard 
+              name={topic.name}
+              description={topic.description}
+              postCount={0}
+            />
+          </div>
         ))
       )}
     </div>
