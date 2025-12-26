@@ -58,6 +58,7 @@ function PostList(props: PostListProps) {
       {posts.map(post => (
         <PostCard
           key={post.id}
+          id={post.id} 
           title={post.title}
           content={post.content}
           author={post.author}

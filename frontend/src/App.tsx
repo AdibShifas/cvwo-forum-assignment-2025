@@ -9,6 +9,19 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TopicCard from './TopicCard';
 import PostList from './PostList';
 import CreatePostForm from './CreatePostForm';
+import '@fontsource/inter/400.css'; // Regular
+import '@fontsource/inter/700.css'; // Bold
+import { createTheme, ThemeProvider, CssBaseline } from '@mui/material';
+
+const theme = createTheme({
+  typography: {
+    // Set the global font family
+    fontFamily: [
+      'Inter',         // Your custom font
+      'sans-serif',    // Fallback
+    ].join(','),
+  },
+});
 
 interface Topic {
   id: number;
@@ -91,7 +104,7 @@ function App() {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 4 }}>
-        <Typography variant="h2" component="h1" gutterBottom>
+        <Typography sx={{ fontFamily: 'monospace' }} variant="h2" component="h1" gutterBottom fontWeight={700} >
           🚀 CVWO Forum
         </Typography>
         <Typography variant="h6" color="text.secondary">
