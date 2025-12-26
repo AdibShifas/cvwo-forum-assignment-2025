@@ -323,7 +323,7 @@ backend/
 
 - **Dec 10-13:** Setup and core features ✅
 - **Dec 17-22:** Database integration ✅
-- **Dec 23-29:** Posts and Comments
+- **Dec 23-29:** Posts and Comments ✅
 - **Dec 30 - Jan 2:** Authentication
 - **Jan 3-18:** Deployment and polish
 - **Jan 19-24:** Final documentation
