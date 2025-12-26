@@ -240,11 +240,10 @@ backend/
 - ✅ Create post form with validation
 
 ### Phase 4: Comments Feature (Dec 26-29)
-- Create Comment data model
-- Implement comments API endpoints
-- Build Comment React components
-- Nested comment display
-- Test full comments workflow
+- ✅ Comments API (GET/POST with filtering)
+- ✅ Comments React components
+- ✅ Create comment form
+- ✅ Collapsible comment sections
 
 ### Phase 5: Authentication (Dec 30 - Jan 2)
 - Simple username-based auth
@@ -253,7 +252,7 @@ backend/
 - Display author information
 
 ### Phase 6: Polish & Deploy (Jan 3-18)
-- Add Material-UI styling
+- ✅ Add Material-UI styling
 - Improve error handling
 - Add loading states
 - Deploy backend to Render
