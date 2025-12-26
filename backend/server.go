@@ -28,6 +28,15 @@ type Post struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type Comment struct {
+	ID        int       `json:"id"`
+	PostID    int       `json:"post_id"`
+	Content   string    `json:"content"`
+	Author    string    `json:"author"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Get all topics from database
 func getTopicsFromDB() ([]Topic, error) {
 	rows, err := db.Query("SELECT id, name, description, created_at, updated_at FROM topics ORDER BY id")
@@ -114,6 +123,96 @@ func createPostInDB(topicID int, title, content, author string) (*Post, error) {
 		return nil, err
 	}
 	return &post, nil
+}
+
+// get all comments or filter by post id
+func getCommentsFromDB(postID string) ([]Comment, error) {
+	var rows *sql.Rows
+	var err error
+	if postID != "" {
+		//get comments for specific post
+		rows, err = db.Query(
+			"SELECT id, post_id, content, author, created_at, updated_at FROM comments WHERE post_id = $1 ORDER BY created_at ASC",
+			postID,
+		)
+	} else {
+		//get all comments
+		rows, err = db.Query(
+			"SELECT id, post_id, content, author, created_at, updated_at FROM comments ORDER BY created_at ASC",
+		)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var comments []Comment
+	for rows.Next() {
+		var comment Comment
+		err := rows.Scan(&comment.ID, &comment.PostID, &comment.Content, &comment.Author, &comment.CreatedAt, &comment.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+	if comments == nil {
+		comments = []Comment{}
+	}
+
+	return comments, nil
+}
+
+// create comment in database
+func createCommentInDB(postID int, content, author string) (*Comment, error) {
+	var comment Comment
+	err := db.QueryRow(
+		"INSERT INTO comments (post_id, content, author) VALUES ($1, $2, $3) RETURNING id, post_id, content, author, created_at, updated_at",
+		postID, content, author,
+	).Scan(&comment.ID, &comment.PostID, &comment.Content, &comment.Author, &comment.CreatedAt, &comment.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &comment, nil
+}
+
+// handle comments endpoint
+func handleComments(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "GET" {
+		// Get post_id from query parameter
+		postID := r.URL.Query().Get("post_id")
+
+		comments, err := getCommentsFromDB(postID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(comments)
+
+	} else if r.Method == "POST" {
+		var input struct {
+			PostID  int    `json:"post_id"`
+			Content string `json:"content"`
+			Author  string `json:"author"`
+		}
+
+		err := json.NewDecoder(r.Body).Decode(&input)
+		if err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+		comment, err := createCommentInDB(input.PostID, input.Content, input.Author)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(comment)
+	}
+
 }
 
 // Handle topics endpoint
@@ -207,6 +306,7 @@ func main() {
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/topics", handleTopics)
 	mux.HandleFunc("/posts", handlePosts)
+	mux.HandleFunc("/comments", handleComments)
 
 	// CORS configuration
 	c := cors.New(cors.Options{
@@ -220,11 +320,14 @@ func main() {
 	fmt.Println("🚀 Server running on http://localhost:8080")
 	fmt.Println("✅ Connected to PostgreSQL database")
 	fmt.Println("API Endpoints:")
-	fmt.Println("  GET  /topics        - List all topics")
-	fmt.Println("  POST /topics        - Create new topic")
-	fmt.Println("  GET  /posts         - List all posts")
-	fmt.Println("  GET  /posts?topic_id=1  - List posts in topic")
-	fmt.Println("  POST /posts         - Create new post")
+	fmt.Println("  GET  /topics              - List all topics")
+	fmt.Println("  POST /topics              - Create new topic")
+	fmt.Println("  GET  /posts               - List all posts")
+	fmt.Println("  GET  /posts?topic_id=1    - List posts in topic")
+	fmt.Println("  POST /posts               - Create new post")
+	fmt.Println("  GET  /comments            - List all comments")
+	fmt.Println("  GET  /comments?post_id=1  - List comments on post")
+	fmt.Println("  POST /comments            - Create new comment")
 
 	http.ListenAndServe(":8080", handler)
 }
