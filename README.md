@@ -15,7 +15,7 @@
 
 ## Progress
 - [x] Project setup
-- [ ] Backend API
-- [ ] Frontend UI
-- [ ] Database integration
+- [x] Backend API
+- [x] Frontend UI
+- [x] Database integration
 - [ ] Deployment
