@@ -37,6 +37,11 @@ type Comment struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type User struct {
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // Get all topics from database
 func getTopicsFromDB() ([]Topic, error) {
 	rows, err := db.Query("SELECT id, name, description, created_at, updated_at FROM topics ORDER BY id")
@@ -215,6 +220,66 @@ func handleComments(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// login or create user
+func loginUser(username string) (*User, error) {
+	var user User
+
+	err := db.QueryRow(
+		"SELECT username, created_at FROM users WHERE username = $1",
+		username,
+	).Scan(&user.Username, &user.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		// User does not exist, create new user
+		err = db.QueryRow(
+			"INSERT INTO users (username) VALUES ($1) RETURNING username, created_at",
+			username,
+		).Scan(&user.Username, &user.CreatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+// handle login endpoint
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == "POST" {
+		var input struct {
+			Username string `json:"username"`
+		}
+		err := json.NewDecoder(r.Body).Decode(&input)
+		if err != nil {
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
+		// Validate username
+		if input.Username == "" || len(input.Username) < 2 {
+			http.Error(w, "Username must be at least 2 characters", http.StatusBadRequest)
+			return
+		}
+
+		if len(input.Username) > 50 {
+			http.Error(w, "Username must be less than 50 characters", http.StatusBadRequest)
+			return
+		}
+
+		user, err := loginUser(input.Username)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(user)
+	}
+}
+
 // Handle topics endpoint
 func handleTopics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -307,6 +372,7 @@ func main() {
 	mux.HandleFunc("/topics", handleTopics)
 	mux.HandleFunc("/posts", handlePosts)
 	mux.HandleFunc("/comments", handleComments)
+	mux.HandleFunc("/login", handleLogin)
 
 	// CORS configuration
 	c := cors.New(cors.Options{
@@ -320,6 +386,7 @@ func main() {
 	fmt.Println("🚀 Server running on http://localhost:8080")
 	fmt.Println("✅ Connected to PostgreSQL database")
 	fmt.Println("API Endpoints:")
+	fmt.Println("  POST /login               - Login/create user")
 	fmt.Println("  GET  /topics              - List all topics")
 	fmt.Println("  POST /topics              - Create new topic")
 	fmt.Println("  GET  /posts               - List all posts")
