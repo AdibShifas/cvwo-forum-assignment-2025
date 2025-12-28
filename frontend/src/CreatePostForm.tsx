@@ -9,13 +9,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 interface CreatePostFormProps {
   topicId: number;
+  currentUser: string;
   onPostCreated: () => void;
 }
 
 function CreatePostForm(props: CreatePostFormProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [author, setAuthor] = useState('');
+  // Remove this line: const [author, setAuthor] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -26,7 +27,7 @@ function CreatePostForm(props: CreatePostFormProps) {
       topic_id: props.topicId,
       title: title,
       content: content,
-      author: author
+      author: props.currentUser  // ← Use currentUser instead
     };
 
     fetch('http://localhost:8080/posts', {
@@ -41,7 +42,7 @@ function CreatePostForm(props: CreatePostFormProps) {
         console.log('Post created:', data);
         setTitle('');
         setContent('');
-        setAuthor('');
+        // Remove: setAuthor('');
         setIsSubmitting(false);
         props.onPostCreated();
       })
@@ -80,15 +81,11 @@ function CreatePostForm(props: CreatePostFormProps) {
           rows={5}
         />
         
-        <TextField
-          fullWidth
-          label="Your Name"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          required
-          margin="normal"
-          variant="outlined"
-        />
+        {/* REMOVE THE AUTHOR TEXTFIELD - it's auto-filled now! */}
+        
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          Posting as: {props.currentUser}
+        </Typography>
         
         <Button
           type="submit"

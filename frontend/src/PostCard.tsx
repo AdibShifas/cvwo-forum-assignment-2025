@@ -21,6 +21,7 @@ interface PostCardProps {
   content: string;
   author: string;
   createdAt: string;
+  currentUser: string;
 }
 
 function PostCard(props: PostCardProps) {
@@ -88,6 +89,7 @@ function PostCard(props: PostCardProps) {
           
           <CreateCommentForm 
             postId={props.id}
+            currentUser={props.currentUser}
             onCommentCreated={() => setRefreshComments(prev => prev + 1)}
           />
           

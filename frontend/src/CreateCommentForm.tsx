@@ -7,12 +7,12 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 interface CreateCommentFormProps {
   postId: number;
+  currentUser: string;
   onCommentCreated: () => void;
 }
 
 function CreateCommentForm(props: CreateCommentFormProps) {
   const [content, setContent] = useState('');
-  const [author, setAuthor] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,7 +22,7 @@ function CreateCommentForm(props: CreateCommentFormProps) {
     const newComment = {
       post_id: props.postId,
       content: content,
-      author: author
+      author: props.currentUser
     };
 
     fetch('http://localhost:8080/comments', {
@@ -36,7 +36,6 @@ function CreateCommentForm(props: CreateCommentFormProps) {
       .then(data => {
         console.log('Comment created:', data);
         setContent('');
-        setAuthor('');
         setIsSubmitting(false);
         props.onCommentCreated();
       })
@@ -68,17 +67,6 @@ function CreateCommentForm(props: CreateCommentFormProps) {
         variant="outlined"
         multiline
         rows={3}
-        size="small"
-      />
-      
-      <TextField
-        fullWidth
-        label="Your name"
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
-        required
-        margin="dense"
-        variant="outlined"
         size="small"
       />
       

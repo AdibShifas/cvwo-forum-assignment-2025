@@ -1,26 +1,30 @@
 import { useState, useEffect } from 'react';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 import PostCard from './PostCard';
+
 interface Post {
-    id: number;
-    topic_id: number;
-    title: string;
-    content: string;
-    author: string;
-    created_at: string;
+  id: number;
+  topic_id: number;
+  title: string;
+  content: string;
+  author: string;
+  created_at: string;
 }
 
 interface PostListProps {
-  topicId?: number;  // Optional: filter by topic
-  refreshTrigger?: number; //trigger to refresh the list
+  topicId?: number;
+  currentUser: string;
+  refreshTrigger?: number;
 }
 
 function PostList(props: PostListProps) {
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    setLoading(true);
     
-    useEffect(() => {
-    // Build URL with optional topic filter
     let url = 'http://localhost:8080/posts';
     if (props.topicId) {
       url += `?topic_id=${props.topicId}`;
@@ -36,36 +40,34 @@ function PostList(props: PostListProps) {
         console.error('Error fetching posts:', error);
         setLoading(false);
       });
-  }, [props.topicId, props.refreshTrigger]); 
+  }, [props.topicId, props.refreshTrigger]);
 
-    if (loading) {
-    return <div style={{ padding: '20px' }}>Loading posts...</div>;
+  if (loading) {
+    return <Typography variant="body2">Loading posts...</Typography>;
   }
 
   if (posts.length === 0) {
     return (
-      <div style={{ 
-        padding: '20px', 
-        textAlign: 'center',
-        color: '#888'
-      }}>
+      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
         No posts yet. Be the first to post!
-      </div>
+      </Typography>
     );
   }
+
   return (
-    <div>
+    <Box>
       {posts.map(post => (
         <PostCard
           key={post.id}
-          id={post.id} 
+          id={post.id}
           title={post.title}
           content={post.content}
           author={post.author}
           createdAt={post.created_at}
+          currentUser={props.currentUser}
         />
       ))}
-    </div>
+    </Box>
   );
 }
 
